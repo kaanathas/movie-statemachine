@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'sam-app
+
+  Sample SAM Template for sam-app
+
+  '
+Globals:
+  Function:
+    Timeout: 3
+Resources:
+  CheckAgeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: CheckAgeFunction
+      Handler: take-age.AgeTakeHandler
+      Runtime: nodejs12.x
+  KidsMoviesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: KidsMoviesFunction
+      Handler: kids-movies.KidsMoviesHandler
+      Runtime: nodejs12.x
+  AdultsMoviesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: AdultsMoviesFunction
+      Handler: all-movies.AllMoviesHandler
+      Runtime: nodejs12.x
+  MoviesStatemachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: ../../state-mac-def/movie-flow.json
+      DefinitionSubstitutions:
+        CheckAgeFunctionArn:
+          Fn::GetAtt:
+          - CheckAgeFunction
+          - Arn
+        KidsMoviesFunctionArn:
+          Fn::GetAtt:
+          - KidsMoviesFunction
+          - Arn
+        AllMoviesFunctionArn:
+          Fn::GetAtt:
+          - AdultsMoviesFunction
+          - Arn
+      Events:
+        StateMac:
+          Type: Api
+          Properties:
+            Path: /movies
+            Method: POST
+      Policies:
+      - LambdaInvokePolicy:
+          FunctionName:
+            Ref: CheckAgeFunction
+      - LambdaInvokePolicy:
+          FunctionName:
+            Ref: KidsMoviesFunction
+      - LambdaInvokePolicy:
+          FunctionName:
+            Ref: AdultsMoviesFunction
+Outputs:
+  HelloWorldApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/

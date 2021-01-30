@@ -1,0 +1,70 @@
+{
+    "Comment":"sate machine for movie list for age limite",
+    "StartAt":"check age",
+    "States":{
+
+        "check age":{
+            "Type":"Task",
+            "Resource":"${CheckAgeFunctionArn}",
+            "Retry":[
+                {
+                    "ErrorEquals":[
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds":15,
+                    "MaxAttempts":5,
+                    "BackoffRate":1.5
+                }  
+            ],
+            "Next":"kids or adults"
+        },
+        "kids or adults":{
+            "Type":"Choice",
+            "Choices":[
+                {
+                    "Variable":"$.body",
+                    "NumericLessThanEquals":18,
+                    "Next":"Kids Movies"
+                }
+                
+            ],
+            "Default":"Adults Movies"
+        },
+
+        "Kids Movies":{
+            "Type":"Task",
+            "Resource":"${KidsMoviesFunctionArn}",
+            "Retry":[
+                {
+                    "ErrorEquals":[
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds":15,
+                    "MaxAttempts":5,
+                    "BackoffRate":1.5
+                }  
+            ],
+            "End": true
+            
+        },
+        "Adults Movies":{
+            "Type":"Task",
+            "Resource":"${AllMoviesFunctionArn}",
+            "Retry":[
+                {
+                    "ErrorEquals":[
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds":15,
+                    "MaxAttempts":5,
+                    "BackoffRate":1.5
+                }  
+            ],
+            "End": true
+            
+        }
+
+    }
+
+    
+}
